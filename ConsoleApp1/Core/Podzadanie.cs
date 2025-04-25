@@ -12,7 +12,7 @@ namespace ConsoleApp1.Core
         public string NazwaPodzadania { get; set; }
         public int NumerPodzadania { get; set; }
         public int SzacowanyCzas { get; set; }
-        public int Priorytet { get; set; } // Dodany atrybut wartościowania
+        public int Priorytet { get; set; } 
 
         public Podzadanie(int numerZadania, string nazwaPodzadania, int numerPodzadania, int szacowanyCzas, int priorytet)
         {

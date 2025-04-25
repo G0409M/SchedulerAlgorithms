@@ -21,7 +21,7 @@ namespace ConsoleApp1.Infrastructure
             {
                 var ws = package.Workbook.Worksheets.Add("Harmonogram");
 
-                // Nagłówki
+               
                 ws.Cells[1, 1].Value = "Data";
                 ws.Cells[1, 2].Value = "Zadeklarowany czas [h]";
                 ws.Cells[1, 3].Value = "Numer Zadania";

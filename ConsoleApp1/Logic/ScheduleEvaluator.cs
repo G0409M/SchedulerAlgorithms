@@ -29,7 +29,6 @@ namespace ConsoleApp1.Logic
 
             var wszystkiePodzadania = podzadania;
 
-            // 1. Kara za przekroczenie deadline'u lub brak przydzielenia zadania
             foreach (var zad in zadania.Values)
             {
                 var wpisyZadania = harmonogram
@@ -41,16 +40,15 @@ namespace ConsoleApp1.Logic
                     var maxData = wpisyZadania.Max(h => h.Data);
                     if (maxData > zad.TerminRealizacji)
                     {
-                        kara += zad.Priorytet * 500; // kara za przekroczenie terminu
+                        kara += zad.Priorytet * 500; 
                     }
                 }
                 else
                 {
-                    kara += zad.Priorytet * 1000; // zadanie w ogóle nieprzypisane
+                    kara += zad.Priorytet * 1000; 
                 }
             }
 
-            // 2. Kara za nieprzypisanie lub nadmiar czasu podzadania
             foreach (var pod in wszystkiePodzadania)
             {
                 var wpisy = grupyPoPodzadaniu.ContainsKey(pod)
@@ -66,7 +64,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // 3. Kolejność podzadań w każdym zadaniu
             var zadaniaGrupowane = wszystkiePodzadania.GroupBy(p => p.NumerZadania);
             foreach (var grupa in zadaniaGrupowane)
             {
@@ -83,14 +80,13 @@ namespace ConsoleApp1.Logic
 
                     if (lastEnd.HasValue && najwczesniejszy < lastEnd.Value)
                     {
-                        kara += pod.Priorytet * 300; // naruszenie kolejności
+                        kara += pod.Priorytet * 300; 
                     }
 
                     lastEnd = czas.Last().Data;
                 }
             }
 
-            // 4A. Kara za przekroczenie dostępności dnia
             var dniZPrzypisaniami = harmonogram
                 .GroupBy(h => h.Data)
                 .Select(g => new
@@ -107,15 +103,14 @@ namespace ConsoleApp1.Logic
                 if (dzien.Wykorzystane > dzien.Dostepne)
                 {
                     double nadmiar = dzien.Wykorzystane - dzien.Dostepne;
-                    kara += nadmiar *500; // kara za przekroczenie dostępnego czasu
+                    kara += nadmiar *500;
                 }
             }
-            // 4B. Kara za nierównomierne obciążenie dni
             if (dniZPrzypisaniami.Any())
             {
                 double sredniProcent = dniZPrzypisaniami.Average(x => (double)x.Wykorzystane / x.Dostepne);
                 double sumaOdchylek = dniZPrzypisaniami.Sum(x => Math.Abs((double)x.Wykorzystane / x.Dostepne - sredniProcent));
-                kara += sumaOdchylek * 20; // subtelna kara za brak równomierności
+                kara += sumaOdchylek * 20; 
             }
 
 

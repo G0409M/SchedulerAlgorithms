@@ -74,7 +74,7 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            Console.WriteLine($"\n🌟 Najlepsza znaleziona kara: {najlepszaKara:F2}");
+            Console.WriteLine($"\n Najlepsza znaleziona kara: {najlepszaKara:F2}");
             return najlepszy;
         }
 
@@ -84,7 +84,6 @@ namespace ConsoleApp1.Logic
         {
             var harmonogram = new List<HarmonogramEntry>();
 
-            // Skopiuj dostępny czas – nie modyfikuj oryginalnych dni roboczych
             var dostep = dniRobocze
                 .Select(d => new DostepnyCzas(d.Data, d.IloscDostepnegoCzasu))
                 .OrderBy(d => d.Data)
@@ -98,7 +97,6 @@ namespace ConsoleApp1.Logic
                 var deadline = mapaZadan[pod.NumerZadania].TerminRealizacji;
                 int pozostalo = pod.SzacowanyCzas;
 
-                // Próbuj przypisać przed deadline
                 while (pozostalo > 0)
                 {
                     var dostepneDni = dostep
@@ -107,7 +105,7 @@ namespace ConsoleApp1.Logic
                         .ToList();
 
                     if (!dostepneDni.Any())
-                        break; // przejdziemy do fallbacku
+                        break; 
 
                     var dzien = dostepneDni.First();
                     int ileMoznaWziac = Math.Min(pozostalo, dzien.IloscDostepnegoCzasu);
@@ -124,20 +122,19 @@ namespace ConsoleApp1.Logic
                     pozostalo -= przydziel;
                 }
 
-                // Fallback: przypisz do dni po deadline lub przekraczając dostępność
                 if (pozostalo > 0)
                 {
-                    Console.WriteLine($"[WARN] Awaryjne przypisanie: {pod.NazwaPodzadania} ({pod.NumerZadania}) – pozostało {pozostalo}h");
+                    Console.WriteLine($" Awaryjne przypisanie: {pod.NazwaPodzadania} ({pod.NumerZadania}) – pozostało {pozostalo}h");
 
                     var fallbackDays = dostep
-                        .OrderBy(_ => rnd.Next()) // losowa kolejność
+                        .OrderBy(_ => rnd.Next()) 
                         .ToList();
 
                     foreach (var dzien in fallbackDays)
                     {
                         if (pozostalo <= 0) break;
 
-                        int przydziel = Math.Min(pozostalo, 4); // umowny max kawałek
+                        int przydziel = Math.Min(pozostalo, 4); 
                         harmonogram.Add(new HarmonogramEntry
                         {
                             Data = dzien.Data,
@@ -155,7 +152,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // Dodaj dni bez przypisanych zadań jako puste wpisy
             var datyZajete = harmonogram.Select(h => h.Data).ToHashSet();
             foreach (var data in dniDaty)
             {
@@ -170,7 +166,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // Posortuj harmonogram dla przejrzystości
             return harmonogram
                 .OrderBy(h => h.Data)
                 .ThenBy(h => h.Podzadanie?.NumerZadania ?? int.MaxValue)

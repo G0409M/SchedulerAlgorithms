@@ -14,7 +14,6 @@ namespace ConsoleApp1.Logic
         private readonly ScheduleEvaluator evaluator;
         private readonly Random random = new Random();
 
-        // Parametry GA
         private int populacjaRozmiar = 200;
         private int liczbaPokolen = 1000;
         private double prawdopodobienstwoKrzyzowania = 0.6;
@@ -47,19 +46,16 @@ namespace ConsoleApp1.Logic
 
                 var najlepszyWTejGeneracji = oceny.First();
 
-                // 🔥 Zachowaj najlepszego globalnie
                 if (najlepszyWTejGeneracji.Kara < najlepszaKara)
                 {
                     najlepszaKara = najlepszyWTejGeneracji.Kara;
                     najlepszyGlobalnie = najlepszyWTejGeneracji.Harmonogram.Select(h => h.Clone()).ToList();
                 }
 
-                // 🧪 Loguj dla każdej generacji
                 Console.WriteLine($"[Gen {generacja + 1}/{liczbaPokolen}] Najlepsza kara: {najlepszyWTejGeneracji.Kara:F2}");
 
                 var nowaPopulacja = new List<List<HarmonogramEntry>>();
 
-                // ⚠️ Zostawiamy jedno miejsce dla elity (najlepszego osobnika)
                 while (nowaPopulacja.Count < populacjaRozmiar - 1)
                 {
                     var rodzic1 = SelekcjaTurniejowa(oceny);
@@ -78,10 +74,8 @@ namespace ConsoleApp1.Logic
                     nowaPopulacja.Add(potomek);
                 }
 
-                // ⭐ Dodaj elitę – najlepszego z poprzedniej generacji
                 nowaPopulacja.Add(najlepszyWTejGeneracji.Harmonogram.Select(h => h.Clone()).ToList());
 
-                // Zastąp starą populację nową
                 populacja = nowaPopulacja;
             }
 
@@ -108,7 +102,6 @@ namespace ConsoleApp1.Logic
         {
             var harmonogram = new List<HarmonogramEntry>();
 
-            // Skopiuj strukturę dostępnego czasu – nie modyfikujemy oryginału
             var dostep = dostepneDni
                 .Select(d => new DostepnyCzas(d.Data, d.IloscDostepnegoCzasu))
                 .OrderBy(d => d.Data)
@@ -125,19 +118,18 @@ namespace ConsoleApp1.Logic
 
                 while (pozostalo > 0)
                 {
-                    // Szukaj dni z dostępnym czasem i przed deadlinem
                     var dostepneDni = dostep
                         .Where(d => d.Data <= deadline && d.IloscDostepnegoCzasu > 0)
                         .OrderByDescending(d => d.IloscDostepnegoCzasu)
                         .ToList();
 
                     if (!dostepneDni.Any())
-                        break; // przejdziemy do fallbacku
+                        break; 
 
                     var dzien = dostepneDni.First();
 
                     int ileMoznaWziac = Math.Min(pozostalo, dzien.IloscDostepnegoCzasu);
-                    int przydziel = random.Next(1, ileMoznaWziac + 1); // min 1h
+                    int przydziel = random.Next(1, ileMoznaWziac + 1); 
 
                     harmonogram.Add(new HarmonogramEntry
                     {
@@ -150,18 +142,17 @@ namespace ConsoleApp1.Logic
                     pozostalo -= przydziel;
                 }
 
-                // Fallback: przypisz pozostałe godziny po terminie, jeśli trzeba (niezależnie od dostępności)
                 if (pozostalo > 0)
                 {
                     var fallbackDays = dostep
-                        .OrderBy(d => random.Next()) // losowa kolejność
+                        .OrderBy(d => random.Next()) 
                         .ToList();
 
                     foreach (var dzien in fallbackDays)
                     {
                         if (pozostalo <= 0) break;
 
-                        int przydziel = Math.Min(pozostalo, 4); // max 4h na wpis (umownie)
+                        int przydziel = Math.Min(pozostalo, 4);
                         harmonogram.Add(new HarmonogramEntry
                         {
                             Data = dzien.Data,
@@ -179,7 +170,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // Uzupełnij dni puste (bez zadań)
             var datyZajete = harmonogram.Select(h => h.Data).ToHashSet();
             foreach (var data in dniDaty)
             {
@@ -194,7 +184,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // Posortuj harmonogram
             return harmonogram
                 .OrderBy(h => h.Data)
                 .ThenBy(h => h.Podzadanie?.NumerZadania ?? int.MaxValue)
@@ -217,7 +206,6 @@ namespace ConsoleApp1.Logic
         {
             var potomek = new List<HarmonogramEntry>();
 
-            // Kopia dostępności – nie do ograniczania, tylko do śledzenia użycia
             var dostep = dostepneDni
                 .Select(d => new DostepnyCzas(d.Data, d.IloscDostepnegoCzasu))
                 .OrderBy(d => d.Data)
@@ -241,7 +229,6 @@ namespace ConsoleApp1.Logic
                 var deadline = mapaZadan[pod.NumerZadania].TerminRealizacji;
                 int pozostalo = pod.SzacowanyCzas;
 
-                // Wybierz z którego rodzica bierzemy przypisania (jeśli istnieją)
                 List<HarmonogramEntry> wpisyZrodla = null;
 
                 if (grupy1.ContainsKey(pod) && grupy2.ContainsKey(pod))
@@ -251,7 +238,6 @@ namespace ConsoleApp1.Logic
                 else if (grupy2.ContainsKey(pod))
                     wpisyZrodla = grupy2[pod];
 
-                // Przepisz wpisy z rodzica (jeśli mieszczą się w dostępnym czasie)
                 if (wpisyZrodla != null)
                 {
                     foreach (var wpis in wpisyZrodla.OrderBy(_ => random.Next()))
@@ -275,7 +261,6 @@ namespace ConsoleApp1.Logic
                     }
                 }
 
-                // Jeśli zostało – dopełnij przypisując do wolnych slotów
                 while (pozostalo > 0)
                 {
                     var dostepneDni = dostep
@@ -284,11 +269,11 @@ namespace ConsoleApp1.Logic
                         .ToList();
 
                     if (!dostepneDni.Any())
-                        break; // przejdź do fallbacku
+                        break;
 
                     var dzien = dostepneDni.First();
                     int ileMoznaWziac = Math.Min(pozostalo, dzien.IloscDostepnegoCzasu);
-                    int przydziel = random.Next(1, ileMoznaWziac + 1); // min 1h
+                    int przydziel = random.Next(1, ileMoznaWziac + 1); 
 
                     potomek.Add(new HarmonogramEntry
                     {
@@ -301,7 +286,6 @@ namespace ConsoleApp1.Logic
                     pozostalo -= przydziel;
                 }
 
-                // Fallback: przypisz to co zostało nawet z przekroczeniem dostępności
                 if (pozostalo > 0)
                 {
                     var fallbackDays = dostep.OrderBy(_ => random.Next()).ToList();
@@ -310,7 +294,7 @@ namespace ConsoleApp1.Logic
                     {
                         if (pozostalo <= 0) break;
 
-                        int przydziel = Math.Min(pozostalo, 4); // max 4h na wpis
+                        int przydziel = Math.Min(pozostalo, 4); 
                         potomek.Add(new HarmonogramEntry
                         {
                             Data = dzien.Data,
@@ -328,7 +312,6 @@ namespace ConsoleApp1.Logic
                 }
             }
 
-            // Dodaj dni puste, jeśli nie zostały użyte
             var datyZajete = potomek.Select(h => h.Data).ToHashSet();
             foreach (var data in dniDaty)
             {
@@ -357,7 +340,6 @@ namespace ConsoleApp1.Logic
         {
             var dniZostaloCzasu = dostepneDni.ToDictionary(d => d.Data, d => d.IloscDostepnegoCzasu);
 
-            // Oblicz bieżące wykorzystanie
             foreach (var h in harmonogram.Where(h => h.Podzadanie != null))
                 dniZostaloCzasu[h.Data] -= h.IloscGodzin;
 
@@ -368,11 +350,9 @@ namespace ConsoleApp1.Logic
             {
                 var wpis = wpisyZadaniowe[random.Next(wpisyZadaniowe.Count)];
 
-                // Zdejmij wpis tymczasowo
                 dniZostaloCzasu[wpis.Data] += wpis.IloscGodzin;
                 harmonogram.Remove(wpis);
 
-                // Spróbuj wybrać nowy dzień (randomowy, ale możliwy)
                 var kandydaci = dniZostaloCzasu
                     .Where(kv => kv.Value > 0)
                     .Select(kv => kv.Key)
@@ -393,7 +373,6 @@ namespace ConsoleApp1.Logic
 
                     dniZostaloCzasu[nowyDzien] -= nowaIlosc;
 
-                    // Jeśli coś zostało – przypisz resztę do oryginalnego dnia
                     int pozostale = wpis.IloscGodzin - nowaIlosc;
                     if (pozostale > 0)
                     {
@@ -408,7 +387,6 @@ namespace ConsoleApp1.Logic
                 }
                 else
                 {
-                    // Jeśli nie ma żadnego dnia z wolnym czasem, cofamy wpis
                     harmonogram.Add(wpis);
                     dniZostaloCzasu[wpis.Data] -= wpis.IloscGodzin;
                 }
@@ -424,7 +402,6 @@ namespace ConsoleApp1.Logic
         public double Kara { get; set; }
     }
 
-    // Potrzebne do poprawnego kopiowania:
     static class HarmonogramEntryExtensions
     {
         public static HarmonogramEntry Clone(this HarmonogramEntry entry)
@@ -433,7 +410,7 @@ namespace ConsoleApp1.Logic
             {
                 Data = entry.Data,
                 IloscGodzin = entry.IloscGodzin,
-                Podzadanie = entry.Podzadanie // Zakładamy, że Podzadanie jest referencyjnie współdzielone
+                Podzadanie = entry.Podzadanie 
             };
         }
     }
